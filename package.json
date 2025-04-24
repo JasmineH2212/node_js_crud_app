@@ -4,12 +4,12 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "start": "node server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Jasmine Harit",
   "license": "ISC",
-  "description": "",
+  "description": "This is Node.js CRUD API with Authentication.",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.5.0",
