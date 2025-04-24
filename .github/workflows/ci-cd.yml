@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-    - main
+      - main
 
 jobs:
   build-and-deploy:
@@ -30,7 +30,9 @@ jobs:
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
     - name: Debug Docker username
-      run: echo "Docker username is: ${{ secrets.DOCKER_USERNAME }}"
+      run: echo "Docker username is: $DOCKER_USERNAME"
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
     - name: Build Docker image
       run: docker build -t ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:latest .
@@ -42,3 +44,4 @@ jobs:
       run: |
         docker container prune -f
         docker image prune -f
+
