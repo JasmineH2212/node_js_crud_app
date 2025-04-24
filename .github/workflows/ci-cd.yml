@@ -37,15 +37,21 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Set up QEMU for cross-platform builds (optional, if needed)
+      # Set up QEMU for cross-platform builds
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      # Set up Docker Buildx (recommended for multi-platform builds)
+      # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build and push the Docker image
+      # Debug step to verify tags
+      - name: Debug tags
+        run: |
+          echo "DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}"
+          echo "SHA: ${{ github.sha }}"
+
+      # Build and push the Docker image with proper tags
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -54,6 +60,8 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:latest
             ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:${{ github.sha }}
+          build-args: |
+            NODE_ENV=production
 
       # Clean up unused Docker images to save space
       - name: Clean up Docker
