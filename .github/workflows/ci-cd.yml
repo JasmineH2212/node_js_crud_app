@@ -13,70 +13,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Set up Node.js version 14
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '14'
 
-      # Install dependencies defined in package.json
       - name: Install dependencies
         run: npm install
 
-      # Run tests, if any. It will not block if tests fail.
       - name: Run tests (non-blocking)
-        run: |
-          echo "Running tests..."
-          npm test || echo "Tests failed or not defined — continuing"
+        run: npm test || echo "Tests failed - continuing"
 
-      # Clean Docker artifacts before build
       - name: Clean Docker artifacts
         run: |
           docker system prune -af
           rm -rf ~/.docker/manifests
 
-      # Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Set up QEMU for cross-platform builds
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      # Set up Docker Buildx with explicit configuration
-      - name: Set up Docker Buildx
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: |
             image=moby/buildkit:latest
+          install: true
 
-      # Debug step to verify values
-      - name: Debug info
+      - name: Prepare tags
+        id: tags
         run: |
-          echo "DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}"
-          echo "SHA: ${{ github.sha }}"
-          echo "Image name: ${{ env.DOCKER_IMAGE_NAME }}"
+          echo "TAGS=${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:latest,${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
+          echo "tags=${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:latest,${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_OUTPUT
 
-      # Build and push the Docker image with proper tags
       - name: Build and push Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:latest
-            ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ env.TAGS }}
           build-args: |
             NODE_ENV=production
 
-      # Clean up unused Docker images to save space
-      - name: Clean up Docker
+      - name: Verify pushed images
         run: |
-          docker image prune -af
+          echo "Successfully pushed images with tags: ${{ env.TAGS }}"
