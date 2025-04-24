@@ -9,7 +9,10 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.log("Mongo Error:", err));
 
-// Routes
+app.get('/', (req, res) => {
+  res.send('JWT CRUD API is running 🚀');
+});
+
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
 
