@@ -49,12 +49,13 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .  # Use current directory as the build context
-          push: true  # Push the image to Docker Hub
-          tags: ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:latest  # Correct tag format
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:latest
+            ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:${{ github.sha }}
 
       # Clean up unused Docker images to save space
       - name: Clean up Docker
         run: |
           docker image prune -af
-
