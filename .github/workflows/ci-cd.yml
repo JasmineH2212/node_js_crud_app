@@ -6,47 +6,45 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    # Checkout the repository
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    # Set up Node.js environment
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
 
-    # Install dependencies
-    - name: Install dependencies
-      run: npm install
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install
 
-    # Run tests (optional - won't fail pipeline if none exist)
-    - name: Run tests
-      run: |
-        if [ -f package.json ]; then
-          echo "Running tests..."
-          npm test || exit 0
-        else
-          echo "No tests found"
-        fi
+      # Step 4: Run tests (optional)
+      - name: Run tests
+        run: |
+          if [ -f package.json ]; then
+            echo "Running tests..."
+            npm test || echo "No tests specified, continuing..."
+          fi
 
-    # Log in to Docker Hub using GitHub secrets
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      # Step 5: Build Docker image using Docker Hub username from secrets
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:latest .
 
-    # Build Docker image and tag it properly
-    - name: Build Docker image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:latest .
+      # Step 6: Log in to Docker Hub using secrets
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    # Push Docker image to Docker Hub
-    - name: Push Docker image to Docker Hub
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:latest
+      # Step 7: Push Docker image to Docker Hub
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:latest
 
-    # Clean up Docker containers (optional)
-    - name: Clean up Docker containers
-      run: docker container prune -f
+      # Step 8: Clean up Docker containers
+      - name: Clean up Docker containers
+        run: docker rm -f $(docker ps -aq) || true
 
