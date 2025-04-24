@@ -1,13 +1,12 @@
 name: CI/CD Pipeline
 
-# Trigger the workflow on push to the main branch
 on:
   push:
     branches:
       - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,42 +18,35 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '14' # Specify the Node.js version you want to use
+        node-version: '14'
 
     # Install dependencies
     - name: Install dependencies
       run: npm install
 
-    # Run tests (this is optional for now since you don't have tests)
+    # Run tests (optional - won't fail pipeline if none exist)
     - name: Run tests
       run: |
         if [ -f package.json ]; then
           echo "Running tests..."
-          npm test || exit 0  # If no tests exist, it won't fail the pipeline
+          npm test || exit 0
         else
           echo "No tests found"
         fi
 
-    # Build Docker image
-    - name: Build Docker image
-      run: docker build -t jwt-crud-api .
-
-    # Run the Docker container (locally in GitHub Actions)
-    - name: Run Docker container
-      run: docker run -d -p 3000:3000 jwt-crud-api
-
-    # Docker Hub login using secrets
+    # Log in to Docker Hub using GitHub secrets
     - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}  # Reference the secret for Docker Hub username
-        password: ${{ secrets.DOCKER_PASSWORD }}  # Reference the secret for Docker Hub password
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    # Build Docker image and tag it properly
+    - name: Build Docker image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:latest .
 
     # Push Docker image to Docker Hub
     - name: Push Docker image to Docker Hub
-      run: docker push jwt-crud-api:latest  # Push the Docker image with the "latest" tag
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/jwt-crud-api:latest
 
-    # Optional: Clean up Docker containers
+    # Clean up Docker containers (optional)
     - name: Clean up Docker containers
-      run: docker rm -f $(docker ps -aq)
+      run: docker container prune -f
 
